@@ -1,29 +1,54 @@
 package envios.internacional.service;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import envios.internacional.model.Usuario;
 
+import envios.internacional.model.Usuario;
+import envios.internacional.repository.UsuarioRepository;
+import envios.internacional.exception.UsuarioNotFoundException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UsuarioService {
-    private final List<Usuario> usuarios = new ArrayList<>();
-    
-    public UsuarioService(){
-        usuarios.add(new Usuario(1L,"Juan Manuel", "18875707-3" , "jm.188@gmail.com", "9558412233"));
-        usuarios.add(new Usuario(2L,"Hernesto Villa", "18693139-4" , "hvilla@gmail.com", "6985559981"));
-        usuarios.add(new Usuario(3L,"Javiera Vega", "5668915-k" , "vegaj@gmail.com", "9558436"));
-        usuarios.add(new Usuario(4L,"Miguel Iglesia", "21010984-6" , "Imiguel_21@gmail.com", "97668123"));
-        usuarios.add(new Usuario(5L,"Manuel Donoso", "16148937-9" , "DMoso@gmail.com", "68887431"));
+
+    @Autowired
+    private UsuarioRepository repositorio;
+
+    // listar todo
+    public List<Usuario> obtenerUsuarios() {
+        return repositorio.findAll(Sort.by("id"));
     }
 
-    public List<Usuario> obtenerUsuarios(){
-        return usuarios;
+    // buscar por id
+    public Usuario obtenerUsuarioId(Long id) {
+        return repositorio.findById(id).orElseThrow(() -> new UsuarioNotFoundException(id));
     }
 
-    public Optional<Usuario> obtenerUsuarioId(Long id){
-        return usuarios.stream().filter(p -> p.getId().equals(id)).findFirst();
+    // guardar 
+    public Usuario guardarUsuario(Usuario usuario) {
+        if (repositorio.existsById(usuario.getId())) {
+                throw new IllegalArgumentException("Ya existe un registro con el mismo ID" + usuario.getId());
+        }
+        return repositorio.save(usuario);
     }
+
+    // actualizar por id
+    public Usuario actualizarUsuario(Long id, Usuario usuarioAct) {
+        Usuario usuarioEncontrado = repositorio.findById(id).orElseThrow(() -> new UsuarioNotFoundException(id));
+
+        usuarioEncontrado.setNombre(usuarioAct.getNombre());
+        usuarioEncontrado.setDni(usuarioAct.getDni());
+        usuarioEncontrado.setCorreo(usuarioAct.getCorreo());
+        usuarioEncontrado.setTelefono(usuarioAct.getTelefono());
+
+        return repositorio.save(usuarioEncontrado);
+    }
+
+    // eliminar 
+    public void eliminarUsuario(Long id) {
+        Usuario usuarioEncontrado = repositorio.findById(id).orElseThrow(() -> new UsuarioNotFoundException(id));
+        repositorio.delete(usuarioEncontrado);
+    }    
     
 }

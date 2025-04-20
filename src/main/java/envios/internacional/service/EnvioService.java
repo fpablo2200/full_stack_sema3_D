@@ -1,44 +1,59 @@
 package envios.internacional.service;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import envios.internacional.model.*;
 
+import envios.internacional.model.Envio;
+import envios.internacional.repository.EnvioRepository;
+import envios.internacional.exception.EnvioNotFoundException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class EnvioService {
-    private final List<Envio> envios = new ArrayList<>();
-    
-    public EnvioService(){
-        envios.add(new Envio(1L,"05/02/2025", "10/02/2025" , 
-                new Usuario(3L,"Javiera Vega", "5668915-k" , "vegaj@gmail.com", "9558436"),
-                new Ubicacion(2L,"Mirasol", 2855 , "Chile", "Independencia"),
-                new EstadoEnvio(4L,"Recepcionado")));
 
-        envios.add(new Envio(2L,"17/02/2025", "18/02/2025" , 
-                new Usuario(4L,"Miguel Iglesia", "21010984-6" , "Imiguel_21@gmail.com", "97668123"),
-                new Ubicacion(5L,"Del sur", 9875 , "Chile", "Maipu"),
-                new EstadoEnvio(4L,"Recepcionado")));
+    @Autowired
+    private EnvioRepository repositorio;
 
-        envios.add(new Envio(3L,"30/02/2025", "01/03/2025" , 
-                new Usuario(1L,"Juan Manuel", "18875707-3" , "jm.188@gmail.com", "9558412233"),
-                new Ubicacion(1L,"Diagonal", 1955 , "Chile", "Santiago Centro"),
-                new EstadoEnvio(5L,"Cancelado")));
-
-        envios.add(new Envio(5L,"25/03/2025", null , 
-                new Usuario(4L,"Miguel Iglesia", "21010984-6" , "Imiguel_21@gmail.com", "97668123"),
-                new Ubicacion(4L,"Camino agricola", 0125 , "Chile", "San juaquin"),
-                new EstadoEnvio(3L,"Viajando")));
-
+    // listar todo
+    public List<Envio> obtenerEnvios() {
+        return repositorio.findAll(Sort.by("id"));
     }
 
-    public List<Envio> obtenerEnvios(){
-        return envios;
+    // buscar por id
+    public Envio obtenerEnvioId(Long id) {
+        return repositorio.findById(id).orElseThrow(() -> new EnvioNotFoundException(id));
     }
 
-    public Optional<Envio> obtenerEnvioId(Long id){
-        return envios.stream().filter(p -> p.getId().equals(id)).findFirst();
+    // guardar envio
+    public Envio guardarEnvio(Envio envio) {
+        if (repositorio.existsById(envio.getId())) {
+                throw new IllegalArgumentException("Ya existe un registro con el mismo ID" + envio.getId());
+        }
+        return repositorio.save(envio);
     }
+
+    // actualizar envio por id
+    public Envio actualizarEnvio(Long id, Envio envioAct) {
+        Envio envioEncontrado = repositorio.findById(id).orElseThrow(() -> new EnvioNotFoundException(id));
+
+        envioEncontrado.setFechaEnvio(envioAct.getFechaEnvio());
+        envioEncontrado.setFechaEntrega(envioAct.getFechaEntrega());
+        envioEncontrado.setIdEstadoEnvio(envioAct.getIdEstadoEnvio());
+        envioEncontrado.setIdUbicacion(envioAct.getIdUbicacion());
+        envioEncontrado.setIdUsuario(envioAct.getIdUsuario());
+
+        return repositorio.save(envioEncontrado);
+    }
+
+    // eliminar un envio
+    public void eliminarEnvio(Long id) {
+        Envio envioEncontrado = repositorio.findById(id).orElseThrow(() -> new EnvioNotFoundException(id));
+        repositorio.delete(envioEncontrado);
+    }      
+
+
+
     
 }

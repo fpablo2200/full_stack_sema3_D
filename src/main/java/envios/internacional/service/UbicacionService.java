@@ -1,29 +1,54 @@
 package envios.internacional.service;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import envios.internacional.model.Ubicacion;
 
+import envios.internacional.model.Ubicacion;
+import envios.internacional.repository.UbicacionRepository;
+import envios.internacional.exception.UbicacionNotFoundException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UbicacionService {
-    private final List<Ubicacion> ubicacions = new ArrayList<>();
-    
-    public UbicacionService(){
-        ubicacions.add(new Ubicacion(1L,"Diagonal", 1955 , "Chile", "Santiago Centro"));
-        ubicacions.add(new Ubicacion(2L,"Mirasol", 2855 , "Chile", "Independencia"));
-        ubicacions.add(new Ubicacion(3L,"Avenida henriquez", 255 , "Chile", "Independencia"));
-        ubicacions.add(new Ubicacion(4L,"Camino agricola", 0125 , "Chile", "San juaquin"));
-        ubicacions.add(new Ubicacion(5L,"Del sur", 9875 , "Chile", "Maipu"));
+
+    @Autowired
+    private UbicacionRepository repositorio;
+
+    // listar todo
+    public List<Ubicacion> obtenerUbicaciones() {
+        return repositorio.findAll(Sort.by("id"));
     }
 
-    public List<Ubicacion> obtenerUbicacions(){
-        return ubicacions;
+    // buscar por id
+    public Ubicacion obtenerUbicacionId(Long id) {
+        return repositorio.findById(id).orElseThrow(() -> new UbicacionNotFoundException(id));
     }
 
-    public Optional<Ubicacion> obtenerUbicacionId(Long id){
-        return ubicacions.stream().filter(p -> p.getId().equals(id)).findFirst();
+    // guardar 
+    public Ubicacion guardarUbicacion(Ubicacion ubicacion) {
+        if (repositorio.existsById(ubicacion.getId())) {
+                throw new IllegalArgumentException("Ya existe un registro con el mismo ID" + ubicacion.getId());
+        }
+        return repositorio.save(ubicacion);
     }
+
+    // actualizar por id
+    public Ubicacion actualizarUbicacion(Long id, Ubicacion ubicacionAct) {
+        Ubicacion ubicacionEncontrado = repositorio.findById(id).orElseThrow(() -> new UbicacionNotFoundException(id));
+
+        ubicacionEncontrado.setDireccion(ubicacionAct.getDireccion());
+        ubicacionEncontrado.setNumeracion(ubicacionAct.getNumeracion());
+        ubicacionEncontrado.setPais(ubicacionAct.getPais());
+        ubicacionEncontrado.setComuna(ubicacionAct.getComuna());
+
+        return repositorio.save(ubicacionEncontrado);
+    }
+
+    // eliminar 
+    public void eliminarUbicacion(Long id) {
+        Ubicacion ubicacionEncontrado = repositorio.findById(id).orElseThrow(() -> new UbicacionNotFoundException(id));
+        repositorio.delete(ubicacionEncontrado);
+    }    
     
 }
